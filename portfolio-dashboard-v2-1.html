@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現金＋0050＋00631L＋00662 動態配置計算機</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F0F4F8;color:#2D3748;font-family:'DM Mono','Courier New',monospace;min-height:100vh;padding:24px 16px}
+.wrap{max-width:760px;margin:0 auto}
+input{background:#fff;border:1.5px solid #CBD5E0;color:#2D3748;font-family:inherit;border-radius:10px;outline:none;transition:border .2s}
+input:focus{border-color:#667EEA}
+input[type=range]{-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:#E2E8F0;outline:none;width:100%;cursor:pointer;border:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+button{cursor:pointer;font-family:inherit}
+.card{background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.lbl{font-size:9px;color:#A0AEC0;letter-spacing:2px;margin-bottom:8px;font-weight:700;text-transform:uppercase}
+.tab-bar{display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:22px;background:#fff;border-radius:12px 12px 0 0;padding:0 4px;flex-wrap:wrap}
+.tab{background:none;border:none;padding:10px 14px;font-size:11px;color:#A0AEC0;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;font-weight:600}
+.tab.active{color:#667EEA;border-bottom:2px solid #667EEA}
+.badge{background:linear-gradient(90deg,#667EEA,#764BA2);border-radius:6px;padding:3px 10px;font-size:9px;font-weight:800;letter-spacing:3px;color:#fff}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.alloc-bar{height:22px;border-radius:8px;overflow:hidden;display:flex;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.detail-card{border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.rebal-row{border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.trigger-row{background:#FAFBFF;border:1.5px solid #E8EDFF;border-radius:12px;padding:16px;margin-bottom:10px;display:flex;gap:12px}
+.step-row{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start}
+.step-dot{width:24px;height:24px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.zone-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.zone-card{border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th,td{padding:8px 6px;text-align:center}
+thead tr{border-bottom:2px solid #EEF2FF}
+tbody tr{border-bottom:1px solid #F7F9FF}
+tbody tr:last-child{border-bottom:none}
+.paper-card{border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04);border:1.5px solid #E2E8F0;border-left:4px solid #667EEA}
+.note-box{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:12px;padding:14px;margin-bottom:14px;font-size:11px;color:#92400E;line-height:1.7}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:#F0F4F8}
+::-webkit-scrollbar-thumb{background:#CBD5E0;border-radius:3px}
+@media(max-width:500px){.metric-grid{grid-template-columns:1fr 1fr}.zone-grid{grid-template-columns:1fr}.tab{padding:8px 8px;font-size:10px}table{font-size:9px}th,td{padding:6px 3px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div style="margin-bottom:24px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+      <span class="badge">FIVE-ASSET</span>
+      <span style="font-size:9px;color:#A0AEC0;letter-spacing:2px;font-weight:700">KELLY · VOL-TARGET · BACKTEST</span>
+    </div>
+    <div style="font-size:22px;font-weight:800;letter-spacing:-1px;color:#1A202C">現金＋0050＋00631L＋00662</div>
+    <div style="font-size:11px;color:#A0AEC0;margin-top:4px">動態配置計算機 · 半Kelly × 波動率目標化 · 含歷史回測驗證</div>
+    <div style="font-size:9px;color:#A0AEC0;margin-top:6px;background:#FFF5F5;border:1px solid #FED7D7;border-radius:6px;padding:6px 10px;display:inline-block">
+      ℹ 00670L已於2026/06實證後移除：Sharpe 1.13→1.18，組合波動率下降，詳見回測分頁說明
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('main',this)">配置計算</button>
+    <button class="tab" onclick="switchTab('rebal',this)">再平衡</button>
+    <button class="tab" onclick="switchTab('kelly',this)">Kelly 圖</button>
+    <button class="tab" onclick="switchTab('backtest',this)">回測驗證</button>
+    <button class="tab" onclick="switchTab('papers',this)">論文依據</button>
+    <button class="tab" onclick="switchTab('sop',this)">操作 SOP</button>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div id="tab-main">
+    <div class="card">
+      <div class="lbl">投資總資金（TWD）</div>
+      <input id="capital" type="text" value="1,000,000" oninput="onCapital(this.value)"
+        style="font-size:28px;font-weight:800;padding:10px 14px;width:100%;letter-spacing:1px;color:#1A202C">
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div class="lbl">市場趨勢判斷</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="scenario-btns"></div>
+    </div>
+
+    <div class="card">
+      <div class="lbl">自訂比重（拖拉調整）</div>
+      <div id="sliders"></div>
+    </div>
+
+    <div class="alloc-bar" id="alloc-bar"></div>
+
+    <div class="metric-grid" id="metrics"></div>
+
+    <div id="detail-cards"></div>
+
+    <div class="card" style="background:linear-gradient(135deg,#F7F8FF,#EEF2FF)" id="diversify-card"></div>
+  </div>
+
+  <!-- ── REBALANCE ── -->
+  <div id="tab-rebal" style="display:none">
+    <div class="card">
+      <div class="lbl">目前各部位持有金額（元）</div>
+      <div id="held-inputs"></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="lbl" style="margin-bottom:10px">再平衡操作（目標情境：<span id="rebal-scenario-label" style="color:#667EEA"></span>）</div>
+      <div id="rebal-rows"></div>
+    </div>
+    <div class="card" style="display:flex;gap:24px;flex-wrap:wrap;background:linear-gradient(135deg,#F7F8FF,#EEF2FF)" id="rebal-summary"></div>
+  </div>
+
+  <!-- ── KELLY ── -->
+  <div id="tab-kelly" style="display:none">
+    <div class="card">
+      <div class="lbl" style="margin-bottom:14px">長期成長率 g(L) vs 有效槓桿 L（台股：μ=10%, σ=20%, rf=1.5%）</div>
+      <svg id="kelly-svg" width="100%" viewBox="0 0 460 160" style="display:block"></svg>
+    </div>
+    <div class="zone-grid" id="zone-legend"></div>
+  </div>
+
+  <!-- ── BACKTEST ── -->
+  <div id="tab-backtest" style="display:none">
+    <div class="note-box">
+      ⚠ 以下為 0050／00631L／00662 還原日K實證回測結果，未計入交易成本與稅費。此區間為台股+那指強多頭格局，動態降槓桿策略未必優於買進持有，請勿將樣本內結果直接當作未來預期。<br><br>
+      <b>00670L移除說明：</b>曾納入測試（2017/02~2026/06共同期間），個別表現CAGR 29.84%／波動45.93%／Sharpe僅0.77（四檔中最差）／最大回撤−64.47%（四檔最深）。納入7%配重後，組合Sharpe為1.13；移除後改放等比例至00662與台股，組合Sharpe提升至1.16~1.18，組合波動率同時下降。實證顯示00670L在此樣本期間的風險/報酬效率劣於00662（兩者相關係數0.966，幾乎是同一條曲線放大2倍），故移除，改以00662作為那指曝險的唯一管道。<br><br>
+      策略6a/6b/6c為連續型波動率目標化的三種調整頻率版本：6a用每日滑動20日窗、6b用每月固定窗、6c用每季固定窗，三者結果相當接近，代表調整頻率本身對這段樣本期間的影響有限。<br><br>
+      策略9a-9d為混合策略：站上0050的200日均線時，00631L權重採每月VT動態公式計算（同6b邏輯）；跌破均線時，權重強制壓到固定下限（0%/5%/10%/15%四版本測試）。此混合策略在這組回測中是風險調整後表現最佳的版本（Sharpe 1.11），最大回撤較純00631L buy&hold大幅改善（−40%左右 vs −55%），且四個下限版本之間差異很小（CAGR僅相差0.46個百分點），顯示下限參數本身在此樣本期間並非關鍵變數。
+    </div>
+
+
+
+
+    <div class="card">
+      <div class="lbl" style="margin-bottom:10px">核心歷史統計（年化，2014/10/31起同期比較）</div>
+      <table>
+        <thead><tr><th>標的</th><th>年化報酬</th><th>年化波動</th><th>Sharpe</th><th>最大回撤</th></tr></thead>
+        <tbody id="bt-stats-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="lbl" style="margin-bottom:10px">8種策略回測比較（0050 vs 00631L動態配置）</div>
+      <table>
+        <thead><tr><th style="text-align:left">策略</th><th>年化報酬</th><th>波動</th><th>Sharpe</th><th>最大回撤</th></tr></thead>
+        <tbody id="bt-strategy-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="lbl" style="margin-bottom:10px">關鍵崩盤期間表現（驗證波動率損耗的真實幅度）</div>
+      <table>
+        <thead><tr><th style="text-align:left">期間</th><th>0050</th><th>00631L</th><th>實際倍數</th></tr></thead>
+        <tbody id="bt-period-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#FFF5F5,#FFFBEB)">
+      <div class="lbl" style="margin-bottom:10px;color:#D69E2E">⚠ 波動率訊號的領先性測試</div>
+      <div style="font-size:11px;color:#4A5568;line-height:1.8" id="bt-vol-signal"></div>
+    </div>
+
+    <div class="card">
+      <div class="lbl" style="margin-bottom:10px">結論</div>
+      <div style="font-size:12px;color:#4A5568;line-height:1.9" id="bt-conclusion"></div>
+    </div>
+  </div>
+
+  <!-- ── PAPERS ── -->
+  <div id="tab-papers" style="display:none">
+    <div id="papers-list"></div>
+  </div>
+
+  <!-- ── SOP ── -->
+  <div id="tab-sop" style="display:none">
+    <div style="background:#fff;border:1.5px solid #E2E8F0;border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04)">
+      <div class="lbl" style="padding:14px 16px 6px;margin-bottom:0">五種市場情境對應配置</div>
+      <table>
+        <thead><tr>
+          <th style="color:#A0AEC0;font-size:9px">情境</th>
+          <th style="color:#A0AEC0;font-size:9px">現金</th>
+          <th style="color:#A0AEC0;font-size:9px">0050</th>
+          <th style="color:#A0AEC0;font-size:9px">631L</th>
+          <th style="color:#A0AEC0;font-size:9px">662</th>
+          <th style="color:#A0AEC0;font-size:9px">Beta</th>
+        </tr></thead>
+        <tbody id="sop-tbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="lbl" style="margin-bottom:10px">觸發規則（缺一不可）</div>
+      <div id="triggers"></div>
+    </div>
+    <div class="card">
+      <div class="lbl" style="margin-bottom:14px">每季決策流程</div>
+      <div id="steps"></div>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;font-size:9px;color:#CBD5E0;text-align:center;letter-spacing:1px">
+    教育研究用途 · 不構成投資建議 · Kelly Criterion × Moreira & Muir (2017) × Avellaneda & Zhang (2010)
+  </div>
+</div>
+
+<script>
+// ── 資料 ────────────────────────────────────────────────
+const ASSETS = {
+  cash:  { name:'現金',         beta:0.0, color:'#718096', light:'#F7FAFC', border:'#CBD5E0' },
+  s0050: { name:'0050',         beta:1.0, color:'#3182CE', light:'#EBF8FF', border:'#BEE3F8' },
+  letf:  { name:'00631L 台正2', beta:2.0, color:'#E53E3E', light:'#FFF5F5', border:'#FED7D7' },
+  s662:  { name:'00662 那指',   beta:1.0, color:'#805AD5', light:'#FAF5FF', border:'#E9D8FD' },
+};
+const ASSET_KEYS = ['cash','s0050','letf','s662'];
+
+// 年化共變異數矩陣（實證資料：2016-06-20~2026-06-16，0050/00631L/00662共同期間，FinMind還原日K）
+// 00670L已實證後移除(Sharpe較差，詳見回測分頁)，矩陣順序: [s0050, letf, s662]
+const COV_ORDER = ['s0050','letf','s662'];
+const COV_MATRIX = [
+  [0.040230, 0.075420, 0.028574],
+  [0.075420, 0.149891, 0.055208],
+  [0.028574, 0.055208, 0.048807],
+];
+const INDIV_VOL = { s0050:0.2006, letf:0.3872, s662:0.2209 };
+
+function truePortVol(norm) {
+  // 真實組合波動率 = sqrt(w' Σ w)，現金視為0波動0相關，不納入矩陣運算
+  const w = COV_ORDER.map(k=>norm[k]);
+  let variance = 0;
+  for (let i=0;i<3;i++) for (let j=0;j<3;j++) variance += w[i]*w[j]*COV_MATRIX[i][j];
+  return Math.sqrt(Math.max(variance,0));
+}
+function naiveLinearVol(norm) {
+  // 假設資產完全正相關時的組合波動率（線性加權平均），作為對照基準
+  return COV_ORDER.reduce((s,k)=>s+norm[k]*INDIV_VOL[k],0);
+}
+
+const SCENARIOS = [
+  { id:'bull',    label:'強多頭',   icon:'▲▲', desc:'月線＋季線同步向上', cash:8,  s0050:40, letf:29, s662:23, color:'#38A169', bg:'#F0FFF4', border:'#9AE6B4' },
+  { id:'mild',    label:'溫和多頭', icon:'▲',  desc:'月線上但季線持平',   cash:15, s0050:43, letf:20, s662:22, color:'#3182CE', bg:'#EBF8FF', border:'#90CDF4' },
+  { id:'neutral', label:'盤整',     icon:'▶',  desc:'方向不明，等待訊號', cash:25, s0050:41, letf:15, s662:19, color:'#718096', bg:'#F7FAFC', border:'#CBD5E0' },
+  { id:'caution', label:'警戒',     icon:'▼',  desc:'月線轉跌，季線走平', cash:45, s0050:32, letf:7,  s662:16, color:'#D69E2E', bg:'#FFFFF0', border:'#FAF089' },
+  { id:'bear',    label:'空頭',     icon:'▼▼', desc:'月線＋季線同步向下', cash:60, s0050:26, letf:3,  s662:11, color:'#E53E3E', bg:'#FFF5F5', border:'#FEB2B2' },
+];
+
+const TRIGGERS = [
+  { icon:'📅', title:'季末時間再平衡', desc:'每年3/6/9/12月底，強制歸位至目標比重，不論漲跌', color:'#3182CE', bg:'#EBF8FF' },
+  { icon:'📈', title:'正2漲多降槓',   desc:'00631L當季漲幅 > +20%，主動賣出降回目標比重，獲利轉入現金或0050', color:'#E53E3E', bg:'#FFF5F5' },
+  { icon:'📉', title:'波動率保護線', desc:'20日年化波動率突破30%（COVID型急升），正2部位降至5%以下，現金提升至40–50%。注意：緩跌型空頭（如2022）此訊號可能滯後，需搭配趨勢線判斷', color:'#D69E2E', bg:'#FFFFF0' },
+  { icon:'🔄', title:'趨勢回升補倉', desc:'月線回升＋季線走平，現金分批轉回正2，每月補回目標比重的1/3', color:'#38A169', bg:'#F0FFF4' },
+];
+
+const STEPS = [
+  { text:'確認台股/那指月線與季線方向（上/平/下）', color:'#3182CE' },
+  { text:'檢查20日年化波動率是否突破30%警戒線', color:'#3182CE' },
+  { text:'對應情境表，選定目標比重', color:'#667EEA' },
+  { text:'計算各部位差額（使用再平衡分頁）', color:'#667EEA' },
+  { text:'先賣出超重部位，再買入低配部位', color:'#38A169' },
+  { text:'確認再平衡後有效Beta落在目標區間', color:'#38A169' },
+  { text:'下季再評估（循環）', color:'#38A169' },
+];
+
+// ── 回測實證數據（0050/00631L/00662 還原日K，FinMind資料源）──
+const BACKTEST = {
+  period: '2014-10-31 ~ 2026-06-16',
+  stats: [
+    { name:'0050',   cagr:21.81, vol:19.23, sharpe:1.04, maxdd:-33.98 },
+    { name:'00631L', cagr:39.07, vol:37.20, sharpe:1.03, maxdd:-55.11 },
+    { name:'00662',  cagr:25.65, vol:19.70, sharpe:1.18, maxdd:-33.98, note:'起點對齊00662上市日2016/06/17' },
+  ],
+  strategies: [
+    { name:'1. 純0050 (基準)',            cagr:21.84, vol:19.23, sharpe:1.05, maxdd:-33.98 },
+    { name:'2. 純00631L buy&hold',        cagr:39.14, vol:37.22, sharpe:1.04, maxdd:-55.11 },
+    { name:'3. 固定50/50',                cagr:30.82, vol:28.02, sharpe:1.05, maxdd:-43.08 },
+    { name:'4. 固定30%正2/70%0050',       cagr:27.29, vol:24.43, sharpe:1.05, maxdd:-39.54 },
+    { name:'5. 條件式波動率目標化',        cagr:25.57, vol:23.79, sharpe:1.01, maxdd:-39.35 },
+    { name:'6a. 連續型VT（每日,20日窗）',  cagr:34.22, vol:34.63, sharpe:0.98, maxdd:-51.22 },
+    { name:'6b. 連續型VT（每月,上月波動）', cagr:35.75, vol:35.53, sharpe:1.00, maxdd:-53.10 },
+    { name:'6c. 連續型VT（每季,上季波動）', cagr:35.73, vol:35.97, sharpe:0.99, maxdd:-52.72 },
+    { name:'7. 半Kelly動態(60日窗)',       cagr:31.35, vol:29.37, sharpe:1.03, maxdd:-47.01 },
+    { name:'8. 200MA趨勢濾網(多頭30%正2)', cagr:26.48, vol:22.55, sharpe:1.09, maxdd:-35.49 },
+    { name:'9a. 混合(200MA+月VT,下限0%)',  cagr:35.50, vol:30.08, sharpe:1.11, maxdd:-40.31 },
+    { name:'9b. 混合(200MA+月VT,下限5%)',  cagr:35.66, vol:30.29, sharpe:1.11, maxdd:-40.95 },
+    { name:'9c. 混合(200MA+月VT,下限10%)', cagr:35.81, vol:30.51, sharpe:1.11, maxdd:-41.57 },
+    { name:'9d. 混合(200MA+月VT,下限15%)', cagr:35.96, vol:30.75, sharpe:1.11, maxdd:-42.19 },
+  ],
+  periods: [
+    { label:'2018Q4貿易戰',      r0050:-13.55, rletf:-24.06, mult:1.78 },
+    { label:'2020 COVID崩盤',    r0050:-25.09, rletf:-48.18, mult:1.92 },
+    { label:'2020反彈',          r0050:73.93,  rletf:219.53, mult:2.97 },
+    { label:'2022熊市',          r0050:-29.76, rletf:-47.45, mult:1.59 },
+    { label:'2022Q4~2024多頭',   r0050:109.72, rletf:207.61, mult:1.89 },
+    { label:'2025關稅崩盤',      r0050:-11.91, rletf:-27.39, mult:2.30 },
+  ],
+  volSignal: [
+    { label:'2020 COVID',   before:'2020-01-15: 10.6%', trigger:'2020-02-15: 24.9%', after:'2020-03-20: 45.1%', verdict:'✓ 有效領先約1個月偵測到風險上升' },
+    { label:'2022熊市初',   before:'2021-11-01: 14.2%', trigger:'2021-12-15: 11.2%', after:'2022-04-30: 17.1%', verdict:'✗ 緩跌型熊市波動率訊號滯後，未能提前示警' },
+    { label:'2025關稅崩盤', before:'2024-12-01: 18.4%', trigger:'2025-01-15: 20.9%', after:'2025-04-10: 58.5%', verdict:'△ 部分領先，但主要漲幅發生在訊號觸發之後' },
+  ],
+};
+
+// ── 論文清單 ────────────────────────────────────────────
+const PAPERS = [
+  {
+    topic:'半Kelly / 分數凱利準則',
+    cite:'Thorp, E.O. (2011); Ziemba, W.T. (2016); MacLean, Thorp & Ziemba (2010), "The Kelly Capital Growth Investment Criterion"',
+    finding:'凱利準則在無限重複賭局與已知機率假設下數學上最優，但實務常用分數凱利（如半Kelly）。半Kelly相比全Kelly犧牲的預期成長率較小，但降低的波動率比例上更大，提供成長與風控的務實權衡。',
+    color:'#3182CE'
+  },
+  {
+    topic:'最優槓桿公式 f* = μ/σ²',
+    cite:'Merton投資組合問題（連續時間最優控制）；凱利準則離散時間版本',
+    finding:'透過代數推導，長期成長率g(f)的最大值出現在f = μ/σ²，這個公式同時出現在凱利準則與Merton最優投資組合理論中，是計算最優槓桿倍數的數學基礎。',
+    color:'#3182CE'
+  },
+  {
+    topic:'槓桿ETF路徑依賴與波動率損耗',
+    cite:'Avellaneda, M. & Zhang, S. (2010), "Path-Dependence of Leveraged ETF Returns", SIAM Journal on Financial Mathematics, 1, 586-603',
+    finding:'給出槓桿基金報酬與標的指數報酬倍數及已實現變異數之間的精確公式，並用56檔槓桿基金實證驗證高度吻合。同時發現若採用約每週一次的動態再平衡，槓桿ETF可用來複製標的指數報酬，但這也說明目前設計下的槓桿ETF可能不適合單純買進持有的投資人。',
+    color:'#E53E3E'
+  },
+  {
+    topic:'槓桿ETF動態行為',
+    cite:'Cheng, M. & Madhavan, A. (2009), "The Dynamics of Leveraged and Inverse Exchange-Traded Funds", Journal of Investment Management, 7(4)',
+    finding:'用連續時間隨機框架說明槓桿ETF對標的指數的路徑依賴性，是波動率損耗效應最早被嚴謹建模的研究之一，2009年SEC因此發出正式警示，特別針對長期持有槓桿ETF的風險。',
+    color:'#E53E3E'
+  },
+  {
+    topic:'槓桿ETF報酬表估算偏誤',
+    cite:'相關2025年研究（槓桿ETF發行商公開說明書報酬表方法論檢視）',
+    finding:'指出ETF發行商目前用來編製公開說明書報酬表格的近似方法，在高報酬高波動環境下會把多頭槓桿ETF的預期報酬低估超過100個百分點，反之在低報酬低波動環境下會高估空頭槓桿ETF表現。意味著「波動率損耗」常被過度簡化，單邊上漲趨勢中槓桿ETF的真實表現可能優於直覺認知。',
+    color:'#D69E2E'
+  },
+  {
+    topic:'波動率管理投資組合（核心理論依據）',
+    cite:'Moreira, A. & Muir, T. (2017), "Volatility-Managed Portfolios", Journal of Finance, 72(4), 1611-1644',
+    finding:'管理型投資組合在波動率高時降低風險承擔，能產生顯著的alpha、提升Sharpe比率，並為均值變異數投資人帶來顯著效用增益。此現象在大盤、價值、動能、盈利能力、ROE、投資與betting-against-beta等多項因子，以及外匯carry trade都成立，是波動率目標化策略最重要的學術奠基文獻。',
+    color:'#38A169'
+  },
+  {
+    topic:'波動率管理組合的樣本外限制（重要警示）',
+    cite:'後續實證研究（ScienceDirect, "On the performance of volatility-managed portfolios"）',
+    finding:'雖然Moreira and Muir (2017)的事後回歸顯示正向alpha，但這類交易策略無法在真實時間中直接執行；採用合理的樣本外版本後，其確定等值報酬與Sharpe比率通常低於直接投資原始未調整的投資組合，主要源於底層回歸模型的結構不穩定性。這與本頁回測中「條件式VT在樣本內多頭期間未顯著勝過買進持有」的發現相互呼應。',
+    color:'#D69E2E'
+  },
+  {
+    topic:'長期延伸：投資人應否為長期投資進行波動率計時',
+    cite:'Moreira, A. & Muir, T. (2019), "Should Long-Term Investors Time Volatility?", Journal of Financial Economics, 131(3), 507-527',
+    finding:'延伸2017年研究，探討波動率計時策略對長期投資人（而非單期均值變異數投資人）的效用，是評估動態配置是否適合長期持有的關鍵後續文獻。',
+    color:'#38A169'
+  },
+];
+
+// ── 狀態 ────────────────────────────────────────────────
+let state = {
+  capital: 1000000,
+  scenario: 'mild',
+  custom: { cash:15, s0050:43, letf:20, s662:22 },
+  held: { cash:0, s0050:0, letf:0, s662:0 },
+};
+
+// ── 工具 ────────────────────────────────────────────────
+const fmt  = n => Math.round(n).toLocaleString('zh-TW');
+const fmtP = n => Number(n).toFixed(1);
+const halfKelly = 0.085/0.04;
+const fullKelly = halfKelly*2;
+
+function kellyG(norm) {
+  // 把00662併入有效Beta計算（視為1x曝險，分散效果由共變異數矩陣單獨建模於truePortVol）
+  const L = norm.s0050 + norm.letf*2 + norm.s662;
+  return (0.015 + L*0.085 - 0.5*L*L*0.04)*100;
+}
+function getNorm() {
+  const tot = ASSET_KEYS.reduce((s,k)=>s+state.custom[k],0);
+  const out={};
+  ASSET_KEYS.forEach(k=>out[k]=state.custom[k]/tot);
+  return out;
+}
+function getEffectiveBeta(norm) {
+  return norm.s0050*1 + norm.letf*2 + norm.s662*1;
+}
+function getBetaZone(b) {
+  if(b<0.7)  return { label:'保守',    color:'#718096', bg:'#F7FAFC' };
+  if(b<1.0)  return { label:'穩健',    color:'#3182CE', bg:'#EBF8FF' };
+  if(b<1.25) return { label:'積極 ✓',  color:'#38A169', bg:'#F0FFF4' };
+  if(b<1.5)  return { label:'激進',    color:'#D69E2E', bg:'#FFFFF0' };
+  return             { label:'⚠ 超槓桿',color:'#E53E3E', bg:'#FFF5F5' };
+}
+
+// ── 初始化靜態 DOM ───────────────────────────────────────
+function initStatic() {
+  // Scenario buttons
+  const sb = document.getElementById('scenario-btns');
+  SCENARIOS.forEach(s => {
+    const b = document.createElement('button');
+    b.id = 'sc-'+s.id;
+    b.style.cssText = `background:#fff;border:1.5px solid #E2E8F0;border-radius:10px;padding:9px 13px;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.05)`;
+    b.innerHTML = `<div style="font-size:13px;font-weight:700;color:#A0AEC0">${s.icon} ${s.label}</div><div style="font-size:9px;color:#CBD5E0;margin-top:2px">${s.desc}</div>`;
+    b.onclick = () => { state.scenario=s.id; state.custom={cash:s.cash,s0050:s.s0050,letf:s.letf,s662:s.s662}; render(); };
+    sb.appendChild(b);
+  });
+
+  // Sliders
+  const sl = document.getElementById('sliders');
+  ASSET_KEYS.forEach(key => {
+    const a = ASSETS[key];
+    const d = document.createElement('div');
+    d.style.marginBottom='16px';
+    d.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:7px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="width:10px;height:10px;border-radius:50%;background:${a.color}"></div>
+          <span style="font-size:13px;font-weight:700;color:${a.color}">${a.name}</span>
+          <span style="font-size:10px;color:#CBD5E0;background:#F7FAFC;padding:1px 6px;border-radius:4px">β=${a.beta}</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span id="sl-pct-${key}" style="font-size:18px;font-weight:800;color:${a.color}">0%</span>
+          <span id="sl-amt-${key}" style="font-size:10px;color:#A0AEC0;min-width:80px;text-align:right">$0</span>
+        </div>
+      </div>
+      <input type="range" id="sl-${key}" min="0" max="100" style="accent-color:${a.color}" oninput="onSlider('${key}',this.value)">`;
+    sl.appendChild(d);
+  });
+
+  // Held inputs
+  const hi = document.getElementById('held-inputs');
+  ASSET_KEYS.forEach(key => {
+    const a = ASSETS[key];
+    const d = document.createElement('div');
+    d.style.marginBottom='14px';
+    d.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:${a.color};margin-bottom:6px">${a.name}</div>
+      <input id="held-${key}" type="text" value="0" oninput="onHeld('${key}',this.value)"
+        style="border:1.5px solid ${a.border};font-size:18px;font-weight:700;padding:9px 13px;width:100%;color:#1A202C">`;
+    hi.appendChild(d);
+  });
+
+  // SOP table
+  const tb = document.getElementById('sop-tbody');
+  SCENARIOS.forEach((s) => {
+    const beta = (s.s0050 + s.letf*2 + s.s662)/100;
+    const tr = document.createElement('tr');
+    tr.id = 'sop-row-'+s.id;
+    tr.innerHTML = `
+      <td><span style="color:${s.color};font-weight:700">${s.icon} ${s.label}</span></td>
+      <td style="color:#718096;font-weight:700">${s.cash}%</td>
+      <td style="color:#3182CE;font-weight:700">${s.s0050}%</td>
+      <td style="color:#E53E3E;font-weight:700">${s.letf}%</td>
+      <td style="color:#805AD5;font-weight:700">${s.s662}%</td>
+      <td style="color:${s.color};font-weight:800">${beta.toFixed(2)}x</td>`;
+    tb.appendChild(tr);
+  });
+
+  // Triggers
+  const tg = document.getElementById('triggers');
+  TRIGGERS.forEach(t => {
+    tg.innerHTML += `
+      <div class="trigger-row" style="background:${t.bg};border:1.5px solid ${t.color}22;border-left:4px solid ${t.color}">
+        <div style="font-size:24px;flex-shrink:0">${t.icon}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:${t.color};margin-bottom:5px">${t.title}</div>
+          <div style="font-size:12px;color:#4A5568;line-height:1.7">${t.desc}</div>
+        </div>
+      </div>`;
+  });
+
+  // Steps
+  const st = document.getElementById('steps');
+  STEPS.forEach((s,i) => {
+    st.innerHTML += `
+      <div class="step-row">
+        <div class="step-dot" style="background:${s.color}15;border:1.5px solid ${s.color}40;color:${s.color}">${i+1}</div>
+        <div style="font-size:13px;color:#4A5568;line-height:1.7;padding-top:2px">${s.text}</div>
+      </div>`;
+  });
+
+  // Zone legend
+  const zl = document.getElementById('zone-legend');
+  [
+    { label:'過度保守',       range:`0 – ${(halfKelly*0.8).toFixed(1)}x`,                             sub:'犧牲報酬，現金比重太高',   color:'#718096', bg:'#F7FAFC' },
+    { label:'半Kelly甜蜜點',  range:`${(halfKelly*0.8).toFixed(1)} – ${(halfKelly*1.2).toFixed(1)}x`, sub:'風險報酬最佳，Thorp推薦',  color:'#38A169', bg:'#F0FFF4' },
+    { label:'積極進攻區',     range:`${(halfKelly*1.2).toFixed(1)} – ${fullKelly.toFixed(1)}x`,       sub:'激進Beta目標區間',         color:'#667EEA', bg:'#F0F0FF' },
+    { label:'超越 Full Kelly',range:`${fullKelly.toFixed(1)}x 以上`,                                   sub:'成長率數學確定下降',       color:'#E53E3E', bg:'#FFF5F5' },
+  ].forEach(z => {
+    zl.innerHTML += `
+      <div class="zone-card" style="background:${z.bg};border:1.5px solid ${z.color}30;border-left:4px solid ${z.color}">
+        <div style="font-size:12px;font-weight:700;color:${z.color};margin-bottom:4px">${z.label}</div>
+        <div style="font-size:10px;color:#718096;margin-bottom:3px">${z.range}</div>
+        <div style="font-size:10px;color:#A0AEC0">${z.sub}</div>
+      </div>`;
+  });
+
+  // Backtest tables
+  const bts = document.getElementById('bt-stats-tbody');
+  BACKTEST.stats.forEach(s=>{
+    bts.innerHTML += `<tr>
+      <td style="text-align:left;font-weight:700">${s.name}${s.note?`<div style="font-size:8px;color:#A0AEC0;font-weight:400">${s.note}</div>`:''}</td>
+      <td style="color:#38A169;font-weight:700">${s.cagr.toFixed(2)}%</td>
+      <td>${s.vol.toFixed(2)}%</td>
+      <td>${s.sharpe.toFixed(2)}</td>
+      <td style="color:#E53E3E">${s.maxdd.toFixed(2)}%</td>
+    </tr>`;
+  });
+
+  const btst = document.getElementById('bt-strategy-tbody');
+  BACKTEST.strategies.forEach(s=>{
+    btst.innerHTML += `<tr>
+      <td style="text-align:left">${s.name}</td>
+      <td style="color:#38A169;font-weight:700">${s.cagr.toFixed(2)}%</td>
+      <td>${s.vol.toFixed(2)}%</td>
+      <td style="font-weight:700">${s.sharpe.toFixed(2)}</td>
+      <td style="color:#E53E3E">${s.maxdd.toFixed(2)}%</td>
+    </tr>`;
+  });
+
+  const btp = document.getElementById('bt-period-tbody');
+  BACKTEST.periods.forEach(p=>{
+    btp.innerHTML += `<tr>
+      <td style="text-align:left">${p.label}</td>
+      <td style="color:${p.r0050>=0?'#38A169':'#E53E3E'}">${p.r0050>0?'+':''}${p.r0050.toFixed(2)}%</td>
+      <td style="color:${p.rletf>=0?'#38A169':'#E53E3E'};font-weight:700">${p.rletf>0?'+':''}${p.rletf.toFixed(2)}%</td>
+      <td style="font-weight:700">${p.mult.toFixed(2)}x</td>
+    </tr>`;
+  });
+
+  document.getElementById('bt-vol-signal').innerHTML = BACKTEST.volSignal.map(v=>`
+    <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #FDE68A">
+      <b>${v.label}</b><br>
+      平靜期 ${v.before} → 轉折前 ${v.trigger} → 崩盤中 ${v.after}<br>
+      <span style="font-weight:700">${v.verdict}</span>
+    </div>`).join('');
+
+  document.getElementById('bt-conclusion').innerHTML = `
+    1. 過去11年（2014-2026）是台股+那指結構性多頭，純00631L buy&hold（CAGR 39.1%）實際上打敗所有動態降槓桿策略，這是「凸性」效應在單邊多頭市場中發揮作用的結果。<br><br>
+    2. 但這不代表動態策略沒用——在2020 COVID與2025關稅崩盤中，波動率訊號有一定領先性（提前1個月偵測風險上升）；在2022緩跌型熊市中，波動率訊號明顯失靈，必須搭配趨勢線（如200MA）作為雙重確認。<br><br>
+    3. 00631L在主要崩盤期間的實際跌幅倍數落在1.6x~2.3x之間（非理論2.0x），符合波動率損耗的學術預期，但2020反彈期間倍數達2.97x，顯示上漲時的「凸性」加成有時更顯著。<br><br>
+    4. <b>策略9（200MA+月VT混合）在這組回測中提供目前測過所有策略中最佳的風險調整後表現（Sharpe 1.11）</b>：站上均線時用VT動態權重（而非死板固定值），跌破均線時降到低檔，CAGR約35.5-36%、最大回撤壓低到約40%（vs buy&hold的55%）。這驗證了「趨勢方向決定要不要進場，波動率決定進場後該壓多重」這個雙層邏輯，比單一濾網（純200MA或純VT）都更有效率。<br><br>
+    5. 跌破均線時的權重下限（0%/5%/10%/15%）在此樣本中影響極小，代表這個參數不是混合策略效果的關鍵來源，「是否疊加VT動態權重」才是。
+  `;
+
+
+  // Papers
+  const pl = document.getElementById('papers-list');
+  PAPERS.forEach(p=>{
+    pl.innerHTML += `
+      <div class="paper-card" style="border-left-color:${p.color}">
+        <div style="font-size:13px;font-weight:700;color:${p.color};margin-bottom:6px">${p.topic}</div>
+        <div style="font-size:10px;color:#A0AEC0;margin-bottom:8px;font-style:italic">${p.cite}</div>
+        <div style="font-size:12px;color:#4A5568;line-height:1.7">${p.finding}</div>
+      </div>`;
+  });
+
+  drawKelly();
+}
+
+// ── Kelly SVG ───────────────────────────────────────────
+function drawKelly() {
+  const W=460,H=160,fMax=4.5;
+  const pts=[];
+  for(let f=0;f<=fMax;f+=0.05) pts.push({f,g:(0.015+f*0.085-0.5*f*f*0.04)*100});
+  const gMin=Math.min(...pts.map(p=>p.g));
+  const gMax=Math.max(...pts.map(p=>p.g));
+  const tx=f=>(f/fMax)*(W-56)+36;
+  const ty=g=>H-24-((g-gMin)/(gMax-gMin))*(H-44);
+  const pathD=pts.map((p,i)=>`${i===0?'M':'L'}${tx(p.f).toFixed(1)},${ty(p.g).toFixed(1)}`).join(' ');
+
+  const svg=document.getElementById('kelly-svg');
+  svg.innerHTML=`
+    <defs>
+      <linearGradient id="og" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#667EEA" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="#667EEA" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${[0,25,50,75,100].map(pct=>{
+      const y=12+(H-36)*pct/100;
+      const gv=gMax-(gMax-gMin)*pct/100;
+      return `<line x1="36" y1="${y}" x2="${W-6}" y2="${y}" stroke="#EDF2F7" stroke-width="1"/>
+              <text x="32" y="${y+3}" font-size="8" fill="#A0AEC0" text-anchor="end">${gv.toFixed(0)}%</text>`;
+    }).join('')}
+    <line x1="36" y1="${ty(0).toFixed(1)}" x2="${W-6}" y2="${ty(0).toFixed(1)}" stroke="#CBD5E0" stroke-width="1" stroke-dasharray="4,3"/>
+    <path d="${pathD} L${tx(fMax)},${ty(gMin)} L${tx(0)},${ty(gMin)} Z" fill="url(#og)"/>
+    <path d="${pathD}" fill="none" stroke="#667EEA" stroke-width="2.5"/>
+    ${[0,0.5,1,1.5,2,2.5,3,3.5,4].map(v=>`<text x="${tx(v)}" y="${H-7}" font-size="8" fill="#A0AEC0" text-anchor="middle">${v}x</text>`).join('')}
+  `;
+  updateKellyMarkers();
+}
+
+function updateKellyMarkers() {
+  const W=460,H=160,fMax=4.5;
+  const tx=f=>(f/fMax)*(W-56)+36;
+  const allGs=[];
+  for(let f=0;f<=fMax;f+=0.05) allGs.push((0.015+f*0.085-0.5*f*f*0.04)*100);
+  const gMin=Math.min(...allGs), gMax=Math.max(...allGs);
+  const ty=g=>H-24-((g-gMin)/(gMax-gMin))*(H-44);
+  const gAtL=L=>(0.015+L*0.085-0.5*L*L*0.04)*100;
+
+  const norm=getNorm();
+  const beta=getEffectiveBeta(norm);
+
+  document.querySelectorAll('#kelly-svg .marker').forEach(el=>el.remove());
+  const svg=document.getElementById('kelly-svg');
+
+  [
+    { L:beta,      labels:[`我的組合`,`${beta.toFixed(2)}x`], color:'#38A169' },
+    { L:halfKelly, labels:[`半Kelly`,`${halfKelly.toFixed(1)}x`], color:'#3182CE' },
+    { L:fullKelly, labels:[`Full Kelly`,`${fullKelly.toFixed(1)}x`], color:'#E53E3E' },
+  ].filter(m=>m.L>=0&&m.L<=fMax).forEach(m=>{
+    const x=tx(m.L), y=ty(gAtL(m.L));
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','marker');
+
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x);line.setAttribute('y1',12);
+    line.setAttribute('x2',x);line.setAttribute('y2',H-24);
+    line.setAttribute('stroke',m.color);line.setAttribute('stroke-width','1.5');
+    line.setAttribute('stroke-dasharray','4,3');line.setAttribute('opacity','0.6');
+    g.appendChild(line);
+
+    const bg=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    bg.setAttribute('cx',x);bg.setAttribute('cy',y);bg.setAttribute('r','6');
+    bg.setAttribute('fill','white');bg.setAttribute('stroke',m.color);bg.setAttribute('stroke-width','2');
+    g.appendChild(bg);
+
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x);dot.setAttribute('cy',y);dot.setAttribute('r','3');
+    dot.setAttribute('fill',m.color);
+    g.appendChild(dot);
+
+    m.labels.forEach((l,i)=>{
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',x);t.setAttribute('y',10-(m.labels.length-1-i)*11);
+      t.setAttribute('font-size','8.5');t.setAttribute('fill',m.color);
+      t.setAttribute('text-anchor','middle');t.setAttribute('font-weight','700');
+      t.textContent=l;
+      g.appendChild(t);
+    });
+    svg.appendChild(g);
+  });
+}
+
+// ── render ───────────────────────────────────────────────
+function render() {
+  const norm=getNorm();
+  const beta=getEffectiveBeta(norm);
+  const bz=getBetaZone(beta);
+  const g=kellyG(norm);
+  const cap=state.capital;
+
+  SCENARIOS.forEach(s=>{
+    const b=document.getElementById('sc-'+s.id);
+    const active=state.scenario===s.id;
+    b.style.background=active?s.bg:'#fff';
+    b.style.border=`1.5px solid ${active?s.color:'#E2E8F0'}`;
+    b.style.boxShadow=active?`0 2px 8px ${s.color}22`:'0 1px 3px rgba(0,0,0,.05)';
+    b.querySelector('div').style.color=active?s.color:'#718096';
+  });
+
+  ASSET_KEYS.forEach(key=>{
+    const el=document.getElementById('sl-'+key);
+    if(el) el.value=state.custom[key];
+    const pe=document.getElementById('sl-pct-'+key);
+    if(pe) pe.textContent=state.custom[key]+'%';
+    const ae=document.getElementById('sl-amt-'+key);
+    if(ae) ae.textContent='$'+fmt(cap*state.custom[key]/100);
+  });
+
+  const bar=document.getElementById('alloc-bar');
+  bar.innerHTML=ASSET_KEYS.map(key=>{
+    const pct=norm[key]*100;
+    return `<div style="width:${pct}%;background:${ASSETS[key].color};opacity:.85;transition:width .35s ease;
+      display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700;overflow:hidden">
+      ${pct>8?fmtP(pct)+'%':''}</div>`;
+  }).join('');
+
+  const trueVol = truePortVol(norm);
+  const naiveVol = naiveLinearVol(norm);
+  const diversifyDiscount = naiveVol>0 ? trueVol/naiveVol : 1;
+
+  const metrics=[
+    { label:'有效 Beta', val:beta.toFixed(2), color:bz.color, bg:bz.bg, sub:bz.label },
+    { label:'真實組合波動', val:fmtP(trueVol*100)+'%', color:'#667EEA', bg:'#F0F0FF', sub:`線性估計${fmtP(naiveVol*100)}%→分散後` },
+    { label:'成長率 g',  val:g.toFixed(1)+'%', color:'#38A169', bg:'#F0FFF4', sub:'Kelly估算(簡化)' },
+    { label:'現金緩衝',  val:fmtP(norm.cash*100)+'%', color:'#718096', bg:'#F7FAFC', sub:'加碼彈藥' },
+  ];
+  document.getElementById('metrics').innerHTML=metrics.map(m=>`
+    <div class="metric" style="background:${m.bg};border:1.5px solid ${m.color}22">
+      <div style="font-size:8px;color:#A0AEC0;margin-bottom:5px;letter-spacing:1px;font-weight:700">${m.label}</div>
+      <div style="font-size:18px;font-weight:800;color:${m.color}">${m.val}</div>
+      <div style="font-size:9px;color:#A0AEC0;margin-top:3px">${m.sub}</div>
+    </div>`).join('');
+
+  document.getElementById('detail-cards').innerHTML=ASSET_KEYS.map(key=>{
+    const a=ASSETS[key], pct=norm[key];
+    return `<div class="detail-card" style="background:${a.light};border:1.5px solid ${a.border};border-left:4px solid ${a.color}">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:${a.color}">${a.name}</div>
+        <div style="font-size:10px;color:#A0AEC0;margin-top:3px">Beta ${a.beta} · ${fmtP(pct*100)}% 配重</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:18px;font-weight:800;color:${a.color}">$${fmt(cap*pct)}</div>
+        <div style="font-size:10px;color:#A0AEC0;margin-top:2px">Beta貢獻 ${(pct*a.beta).toFixed(2)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderRebal(norm);
+
+  document.getElementById('diversify-card').innerHTML = `
+    <div class="lbl" style="margin-bottom:8px">分散效果折扣（共變異數矩陣實證，2016/06~2026/06）</div>
+    <div style="font-size:12px;color:#4A5568;line-height:1.8">
+      若三資產完全正相關（傳統線性加總假設）：組合波動率 <b>${fmtP(naiveVol*100)}%</b><br>
+      用實際歷史相關係數計算（0050↔00631L相關0.97，但跨市場0050↔00662僅0.645）：真實組合波動率 <b style="color:#667EEA">${fmtP(trueVol*100)}%</b><br>
+      <span style="color:#38A169;font-weight:700">分散效果折扣係數 = ${diversifyDiscount.toFixed(3)}</span>（數字越小代表分散效果越強，1.0代表完全無分散效果）
+    </div>`;
+
+  SCENARIOS.forEach(s=>{
+    const row=document.getElementById('sop-row-'+s.id);
+    if(row) row.style.background=state.scenario===s.id?s.bg:'transparent';
+  });
+
+  updateKellyMarkers();
+}
+
+function renderRebal(norm) {
+  const sc=SCENARIOS.find(s=>s.id===state.scenario);
+  const lbl=document.getElementById('rebal-scenario-label');
+  if(lbl) lbl.textContent=sc?.label||'';
+
+  const totalHeld=ASSET_KEYS.reduce((s,k)=>s+state.held[k],0);
+  const base=totalHeld>0?totalHeld:state.capital;
+
+  const target={}, diff={};
+  ASSET_KEYS.forEach(k=>{
+    target[k]=Math.round(base*norm[k]);
+    diff[k]=target[k]-state.held[k];
+  });
+
+  const rows=document.getElementById('rebal-rows');
+  if(rows) rows.innerHTML=ASSET_KEYS.map(key=>{
+    const a=ASSETS[key], d=diff[key], noop=Math.abs(d)<500;
+    const bg=noop?'#fff':d>0?'#F0FFF4':'#FFF5F5';
+    const bc=noop?'#E2E8F0':d>0?'#9AE6B4':'#FEB2B2';
+    const bl=noop?'#CBD5E0':d>0?'#38A169':'#E53E3E';
+    const vc=noop?'#A0AEC0':d>0?'#38A169':'#E53E3E';
+    const vtxt=noop?'✓ 無需調整':d>0?`▲ 買入 $${fmt(d)}`:`▼ 賣出 $${fmt(Math.abs(d))}`;
+    return `<div class="rebal-row" style="background:${bg};border:1.5px solid ${bc};border-left:4px solid ${bl}">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:${a.color}">${a.name}</div>
+        <div style="font-size:10px;color:#A0AEC0;margin-top:3px">目前 $${fmt(state.held[key])} → 目標 $${fmt(target[key])}</div>
+      </div>
+      <div style="font-size:14px;font-weight:800;color:${vc}">${vtxt}</div>
+    </div>`;
+  }).join('');
+
+  const buySum =Object.values(diff).filter(d=>d>0).reduce((a,b)=>a+b,0);
+  const sellSum=Math.abs(Object.values(diff).filter(d=>d<0).reduce((a,b)=>a+b,0));
+  const adjCnt =Object.values(diff).filter(d=>Math.abs(d)>=500).length;
+  const sum=document.getElementById('rebal-summary');
+  if(sum) sum.innerHTML=[
+    { label:'需買入合計', val:'$'+fmt(buySum),  color:'#38A169' },
+    { label:'需賣出合計', val:'$'+fmt(sellSum), color:'#E53E3E' },
+    { label:'調整標的',   val:adjCnt+' 檔',    color:'#667EEA' },
+  ].map(x=>`<div>
+    <div style="font-size:9px;color:#A0AEC0;margin-bottom:4px;letter-spacing:1px;font-weight:700">${x.label}</div>
+    <div style="font-size:18px;font-weight:800;color:${x.color}">${x.val}</div>
+  </div>`).join('');
+}
+
+// ── 事件 ────────────────────────────────────────────────
+function onCapital(v) {
+  const n=parseInt(v.replace(/,/g,''))||0;
+  state.capital=n;
+  render();
+}
+
+function onSlider(key, val) {
+  const v=parseInt(val);
+  const others=ASSET_KEYS.filter(k=>k!==key);
+  const otherSum=others.reduce((s,k)=>s+state.custom[k],0);
+  const remaining=100-v;
+  if(remaining<0) return;
+  const scale=otherSum>0?remaining/otherSum:1/others.length;
+  state.custom[key]=v;
+  others.forEach(k=>{ state.custom[k]=Math.round(state.custom[k]*scale); });
+  const tot=ASSET_KEYS.reduce((s,k)=>s+state.custom[k],0);
+  if(tot!==100) state.custom[others[others.length-1]]+=100-tot;
+  render();
+}
+
+function onHeld(key, v) {
+  state.held[key]=parseInt(v.replace(/,/g,''))||0;
+  renderRebal(getNorm());
+}
+
+function switchTab(id, btn) {
+  ['main','rebal','kelly','backtest','papers','sop'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display=t===id?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='kelly') updateKellyMarkers();
+}
+
+// ── 啟動 ────────────────────────────────────────────────
+initStatic();
+render();
+</script>
+</body>
+</html>
